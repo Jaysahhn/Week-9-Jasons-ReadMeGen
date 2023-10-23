@@ -8,7 +8,18 @@ function init() {
                 type: 'input',
                 message: "Cady POG",//questions[0],
                 name: 'project',
+            },
+            {
+                type: 'input',
+                message: "Cady POG",//questions[0],
+                name: 'project',
+            },
+            {
+                type: 'input',
+                message: "Cady POG",//questions[0],
+                name: 'project',
             },])
+
         .then((response) => writeToFile(response)
         );
 
