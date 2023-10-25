@@ -1,10 +1,11 @@
-// TODO: Include packages needed for this application
 const inquirer = require("inquirer");
 const fs = require("fs");
-const utils = require("utils")
-const generateMarkdown = require("./utils/generateMarkdown.js");
+const utils = require("util")
+const { generateMarkdown, renderLicenseBadge, renderLicenseLink, renderLicenseSection } = require("./utils/generateMarkdown.js");
 
-// TODO: Create an array of questions for user input
+const writeFileAsync = utils.promisify(fs.writeFile);
+
+
 const questions = [
     {
         type: "input",
@@ -45,46 +46,82 @@ const questions = [
         type: "list",
         name: "license",
         message: "Select a license for your file.",
-        choices: ["Apache License 2.0", "GNU General Public License v3.0", "MIT License", "BSD 2-Cluase 'Simplified' License", "BSD 3-Cluase 'New' or 'Revised' License", "Boost Software License 1.0", "Creative Commons Zero v1.0 Universal", "Eclipse Public License 2.0", "GNU Affero General Public License v3.0", "GNU General Public License v2.0", "GNU Lesser General License v2.1", "Mozilla Public License 2.0", "The Unlicense"]
+        choices: ["Apache License 2.0", "GNU General Public License v3.0", "MIT License", "BSD 2-Cluase 'Simplified' License"]
+    },
+    {
+        type: "input",
+        name: "github",
+        message: "Provide your GitHub username:"
+    },
+    {
+        type: "input",
+        name: "email",
+        message: "Provide your email address:"
     }
 ];
 
-// TODO: Create a function to write README file
-function writeToFile(fileName, data) {
-    fs.writeToFile(fileName, data, err => {
-        if (err) {
-            return console.log(err);
-        }
-        console.log("Your README.md file generated successfully.");
-    });
-}
+async function promptUser() {
+    try {
+        const userResponses = await inquirer.prompt(questions);
+        return userResponses;
+    } catch (error) {
+        console.log(error);
+    }
+};
 
-// TODO: Create a function to initialize app
-// function init() {
-//     inquirer
-//         .prompt([
-//             {
-//                 type: 'input',
-//                 message: questions[0],
-//                 name: 'project',
-//             },
-//             {
-//                 type: 'input',
-//                 message: questions[1],
-//                 name: 'project',
-//             },
-//             {
-//                 type: 'input',
-//                 message: questions[2],
-//                 name: 'project',
-//             },])
+function generateREADME(data) {
+    return `
+    # ${data.title}
 
-//         .then((response) => writeToFile(response)
-//         );
+    ## Description
+    ${data.description}
 
+    ${data.contents}
+    
+    ## Table of Contents
+    - [Installation] (#installation)
+    - [Usage] (#usage) 
+    - [License] (#license)
+    - [Contributing] (#contributing)
+    - [Tests] (#tests)
+    - [Questions] (#questions)
 
+    ## Installation
+    ${data.installation}
 
-// };
+    ## Usage
+    ${data.usage}
 
-// Function call to initialize app
+    ${renderLicenseSection(data.license)}
 
+    ## Contributing
+    ${data.contributions}
+
+    ## Tests
+    ${data.test}
+
+    ## Questions
+    Contact [GitHub Profile](https://github.com/${data.github}) or email at ${data.email}.
+    `;
+};
+
+async function writeToFile(fileName, data) {
+    try {
+        await writeFileAsync(fileName, data);
+        console.log("Your README.md has been generated.");
+    } catch (err) {
+        console.log(err);
+    }
+};
+
+async function init() {
+    try {
+        const userResponses = await promptUser();
+        const markdown = generateREADME(userResponses);
+        await writeToFile("README.md", markdown);
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+init();
